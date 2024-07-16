@@ -56,10 +56,12 @@
     height: 90vmin;
     display: grid;
     gap: 1px;
-    margin-top: 20px;
+    margin: 20px;
+    grid-auto-rows: 1fr;
   }
   .cell {
     background-color: #ccc;
+    aspect-ratio: 1 / 1;
   }
   .purple-cell {
     background-color: purple;
@@ -76,31 +78,35 @@
     margin-right: 10px;
     padding: 5px;
   }
-  #stopButton, #highScoresButton {
+  #highScoresButton {
     margin-top: 10px;
     padding: 10px;
-    background-color: #333;
-    color: white;
+    background-color: yellow;
+    color: black;
     border: none;
     cursor: pointer;
   }
   #stopButton {
     background-color: red;
-  }
-  #startButton:disabled {
-    background-color: gray;
-  }
-  #startButton:enabled {
-    background-color: green;
+    margin-top: 10px;
+    padding: 10px;
   }
   #startButton {
     font-size: 1.5em;
-    padding: 20px;
+  }
+  #startButton:disabled {
+    background-color: gray;
+    margin-top: 10px;
+    padding: 10px;
   }
   #startButton:enabled {
     color: white;
+    background-color: green;
     font-weight: bold;
+    margin-top: 10px;
+    padding: 10px;
   }
+    
   #highScoresModal, #initialsModal {
     display: none;
     position: fixed;
@@ -144,7 +150,8 @@
     color: yellow;
   }
   .new-high-score {
-    background-color: darkgray;
+    background-color: black;
+    color: yellow;
     font-weight: bold;
   }
   @keyframes highlightGreen {
@@ -155,6 +162,13 @@
     from { background-color: red; }
     to { background-color: transparent; }
   }
+
+  .control-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  }
+
 </style>
 </head>
 <body>
@@ -196,13 +210,18 @@
 </div>
 
 <div id="controls">
-  <label for="gridSize">Grid Size:</label>
-  <input type="number" id="gridSize" placeholder="Size" min="2">
-  <label for="timerInput">Time Limit:</label>
-  <input type="number" id="timerInput" placeholder="Timer (seconds)">
-  <button id="startButton" disabled>Start</button>
-  <button id="stopButton" style="display: none;">Stop</button>
-</div>
+    <div class="control-group">
+      <label for="gridSize">Grid Size:</label>
+      <input type="number" id="gridSize" placeholder="Size" min="2">
+    </div>
+    <div class="control-group">
+      <label for="timerInput">Time Limit:</label>
+      <input type="number" id="timerInput" placeholder="Timer (seconds)">
+    </div>
+    <button id="startButton" disabled>Start</button>
+    <button id="stopButton" style="display: none;">Stop</button>
+  </div>
+  
 
 <div id="game-container"></div>
 
