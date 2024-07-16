@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Game</title>
+<style>
+  body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+  }
+  #scoreboard {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    background-color: #333;
+    color: white;
+    gap: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  #scoreboard div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .label {
+    font-size: 1.2em;
+    font-family: 'Consolas', monospace;
+  }
+  .metric {
+    font-size: 1.5em;
+    color: yellow;
+    font-family: 'Consolas', monospace;
+    background-color: black;
+    padding: 5px;
+    border-radius: 5px;
+    width: 8ch;
+    text-align: right;
+  }
+  .header-label {
+    font-size: 1.2em;
+    font-family: 'Consolas', monospace;
+    font-weight: bold;
+    color: yellow;
+  }
+  #game-container {
+    width: 90vmin;
+    height: 90vmin;
+    display: grid;
+    gap: 1px;
+    margin-top: 20px;
+  }
+  .cell {
+    background-color: #ccc;
+  }
+  .purple-cell {
+    background-color: purple;
+  }
+  #controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  label {
+    margin-right: 10px;
+  }
+  #gridSize, #timerInput {
+    margin-right: 10px;
+    padding: 5px;
+  }
+  #stopButton, #highScoresButton {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  #stopButton {
+    background-color: red;
+  }
+  #startButton:disabled {
+    background-color: gray;
+  }
+  #startButton:enabled {
+    background-color: green;
+  }
+  #startButton {
+    font-size: 1.5em;
+    padding: 20px;
+  }
+  #startButton:enabled {
+    color: white;
+    font-weight: bold;
+  }
+  #highScoresModal, #initialsModal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+  #highScoresContent, #initialsContent {
+    background-color: #333;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    color: white;
+    font-family: 'Consolas', monospace;
+  }
+  #closeModal, #closeInitialsModal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  #closeModal:hover,
+  #closeModal:focus,
+  #closeInitialsModal:hover,
+  #closeInitialsModal:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  #highScoresTable, #initialsTable {
+    width: 100%;
+    margin-top: 10px;
+  }
+  .high-score {
+    color: yellow;
+  }
+  .new-high-score {
+    background-color: darkgray;
+    font-weight: bold;
+  }
+  @keyframes highlightGreen {
+    from { background-color: green; }
+    to { background-color: transparent; }
+  }
+  @keyframes highlightRed {
+    from { background-color: red; }
+    to { background-color: transparent; }
+  }
+</style>
+</head>
+<body>
+
+<div id="scoreboard">
+  <div>
+    <span class="header-label">Grid Size: <span id="currentSize"></span></span>
+  </div>
+  <div>
+    <button id="highScoresButton" class="header-label" style="background-color: yellow; color: #000; border: none; cursor: pointer;">Hi-Scores</button>
+  </div>
+  <div>
+    <span class="header-label">Game Timer: <span id="currentTimeSetting"></span></span>
+  </div>
+  <div>
+    <span class="label">Hits</span>
+    <span id="hits" class="metric">0</span>
+  </div>
+  <div>
+    <span class="label">Misses</span>
+    <span id="misses" class="metric">0</span>
+  </div>
+  <div>
+    <span class="label">Accuracy</span>
+    <span id="accuracy" class="metric">0%</span>
+  </div>
+  <div>
+    <span class="label">Hits per minute</span>
+    <span id="hitsPerMinute" class="metric">0</span>
+  </div>
+  <div>
+    <span class="label">Time Elapsed</span>
+    <span id="time" class="metric">0.00</span>
+  </div>
+  <div>
+    <span class="label">Time Remaining</span>
+    <span id="timeLeft" class="metric">0.00</span>
+  </div>
+</div>
+
+<div id="controls">
+  <label for="gridSize">Grid Size:</label>
+  <input type="number" id="gridSize" placeholder="Size" min="2">
+  <label for="timerInput">Time Limit:</label>
+  <input type="number" id="timerInput" placeholder="Timer (seconds)">
+  <button id="startButton" disabled>Start</button>
+  <button id="stopButton" style="display: none;">Stop</button>
+</div>
+
+<div id="game-container"></div>
+
+<audio id="buzz" src="buzz.mp3" preload="auto"></audio>
+<audio id="ding" src="ding.mp3" preload="auto"></audio>
+
+<div id="highScoresModal">
+  <div id="highScoresContent">
+    <span id="closeModal">&times;</span>
+    <h2>High Scores</h2>
+    <label for="gridSizeSelect">Grid Size:</label>
+    <select id="gridSizeSelect"></select>
+    <label for="timerLengthSelect">Timer Length:</label>
+    <select id="timerLengthSelect"></select>
+    <table id="highScoresTable"></table>
+  </div>
+</div>
+
+<div id="initialsModal">
+  <div id="initialsContent">
+    <span id="closeInitialsModal">&times;</span>
+    <h2>Enter Initials</h2>
+    <label for="initialsInput">Initials:</label>
+    <input type="text" id="initialsInput" maxlength="3">
+    <button id="submitInitials">Submit</button>
+  </div>
+</div>
+
+<script>
+  let gridSize = 0;
+  let hits = 0;
+  let misses = 0;
+  let startTime;
+  let gameInterval;
+  let countdownInterval;
+  let timerDuration;
+  let timeLeft;
+  let gameActive = false;
+  let highScores = JSON.parse(localStorage.getItem('highScores')) || {};
+  let justCompletedScore = null;
+
+  document.getElementById('startButton').addEventListener('click', startGame);
+  document.getElementById('stopButton').addEventListener('click', stopGame);
+  document.getElementById('highScoresButton').addEventListener('click', showHighScoresModal);
+  document.getElementById('closeModal').addEventListener('click', () => {
+    document.getElementById('highScoresModal').style.display = 'none';
+  });
+  document.getElementById('closeInitialsModal').addEventListener('click', () => {
+    document.getElementById('initialsModal').style.display = 'none';
+  });
+  document.getElementById('submitInitials').addEventListener('click', submitInitials);
+
+  document.getElementById('gridSize').addEventListener('input', checkStartConditions);
+  document.getElementById('timerInput').addEventListener('input', checkStartConditions);
+
+  function checkStartConditions() {
+    const gridSizeValue = document.getElementById('gridSize').value;
+    const timerValue = document.getElementById('timerInput').value;
+    document.getElementById('startButton').disabled = !(gridSizeValue && timerValue);
+  }
+
+  function startGame() {
+    gridSize = parseInt(document.getElementById('gridSize').value);
+    timerDuration = parseFloat(document.getElementById('timerInput').value);
+
+    if (isNaN(gridSize) || gridSize < 2) {
+      alert('Please enter a valid grid size greater than or equal to 2.');
+      return;
+    }
+
+    hits = 0;
+    misses = 0;
+    startTime = new Date().getTime();
+    clearInterval(gameInterval);
+    clearInterval(countdownInterval);
+    gameInterval = setInterval(updateTime, 10);
+
+    if (!isNaN(timerDuration) && timerDuration > 0) {
+      timeLeft = timerDuration;
+      countdownInterval = setInterval(updateCountdown, 10);
+      document.getElementById('stopButton').style.display = 'none';
+    } else {
+      timeLeft = Infinity;
+      document.getElementById('stopButton').style.display = 'block';
+    }
+
+    document.getElementById('hits').textContent = hits;
+    document.getElementById('misses').textContent = misses;
+    document.getElementById('timeLeft').textContent = (timerDuration || '∞').toFixed(2);
+    document.getElementById('currentSize').textContent = gridSize;
+    document.getElementById('currentTimeSetting').textContent = (timerDuration || '∞').toFixed(2);
+
+    const gameContainer = document.getElementById('game-container');
+    gameContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+    gameContainer.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+    gameContainer.innerHTML = '';
+
+    for (let i = 0; i < gridSize * gridSize; i++) {
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
+      cell.addEventListener('click', miss);
+      gameContainer.appendChild(cell);
+    }
+
+    placePurpleSquare();
+    gameActive = true;
+
+    // Clear input fields and gray out the start button
+    document.getElementById('gridSize').value = '';
+    document.getElementById('timerInput').value = '';
+    document.getElementById('startButton').disabled = true;
+  }
+
+  function stopGame() {
+    if (!gameActive) return;
+    gameActive = false;
+    clearInterval(gameInterval);
+    clearInterval(countdownInterval);
+    saveHighScore();
+    showHighScoresModal();
+  }
+
+  function placePurpleSquare() {
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => cell.classList.remove('purple-cell'));
+    const randomIndex = Math.floor(Math.random() * cells.length);
+    const purpleCell = cells[randomIndex];
+    purpleCell.classList.add('purple-cell');
+
+    purpleCell.removeEventListener('click', miss);
+    purpleCell.addEventListener('click', hit);
+  }
+
+  function hit(event) {
+    if (!gameActive) return;
+    event.stopPropagation();
+    hits++;
+    updateMetric('hits', hits);
+    document.getElementById('ding').play();
+    placePurpleSquare();
+    updateStats();
+  }
+
+  function miss() {
+    if (!gameActive) return;
+    misses++;
+    updateMetric('misses', misses);
+    document.getElementById('buzz').play();
+    updateStats();
+  }
+
+  function updateMetric(id, value) {
+    const element = document.getElementById(id);
+    const previousValue = parseInt(element.textContent);
+    element.textContent = value;
+
+    if (value > previousValue) {
+      element.style.animation = 'highlightGreen 0.5s';
+    } else if (value < previousValue) {
+      element.style.animation = 'highlightRed 0.5s';
+    }
+
+    setTimeout(() => {
+      element.style.animation = '';
+    }, 500);
+  }
+
+  function updateStats() {
+    const currentTime = (new Date().getTime() - startTime) / 1000;
+    document.getElementById('time').textContent = currentTime.toFixed(2);
+    const totalClicks = hits + misses;
+    const accuracy = (totalClicks > 0) ? (hits / totalClicks * 100).toFixed(2) + '%' : '0%';
+    document.getElementById('accuracy').textContent = accuracy;
+    const hitsPerMinute = (currentTime > 0) ? (hits / (currentTime / 60)).toFixed(2) : 0;
+    document.getElementById('hitsPerMinute').textContent = hitsPerMinute;
+  }
+
+  function updateTime() {
+    const currentTime = (new Date().getTime() - startTime) / 1000;
+    document.getElementById('time').textContent = currentTime.toFixed(2);
+  }
+
+  function updateCountdown() {
+    if (timeLeft > 0) {
+      timeLeft -= 0.01;
+      document.getElementById('timeLeft').textContent = timeLeft.toFixed(2);
+    } else {
+      clearInterval(countdownInterval);
+      clearInterval(gameInterval);
+      gameActive = false;
+      saveHighScore();
+      showHighScoresModal();
+      alert(`Time's up! You scored ${hits} hits.`);
+    }
+  }
+
+  function saveHighScore() {
+    const mode = `${gridSize}x${gridSize}_${timerDuration || '∞'}`;
+    if (!highScores[mode]) {
+      highScores[mode] = [];
+    }
+    const newScore = {
+      gridSize,
+      hits,
+      misses,
+      initials: null
+    };
+    highScores[mode].push(newScore);
+    highScores[mode].sort((a, b) => b.hits - a.hits);
+    if (highScores[mode].length > 10) {
+      highScores[mode].pop();
+    }
+    localStorage.setItem('highScores', JSON.stringify(highScores));
+    justCompletedScore = newScore;
+
+    document.getElementById('initialsModal').style.display = 'block';
+  }
+
+  function submitInitials() {
+    const initials = document.getElementById('initialsInput').value.toUpperCase();
+    if (!initials) {
+      alert('Please enter your initials.');
+      return;
+    }
+    justCompletedScore.initials = initials;
+    localStorage.setItem('highScores', JSON.stringify(highScores));
+    document.getElementById('initialsModal').style.display = 'none';
+    showHighScoresModal();
+  }
+
+  function showHighScoresModal() {
+    const gridSizeSelect = document.getElementById('gridSizeSelect');
+    const timerLengthSelect = document.getElementById('timerLengthSelect');
+    const modal = document.getElementById('highScoresModal');
+    const table = document.getElementById('highScoresTable');
+
+    gridSizeSelect.innerHTML = '';
+    timerLengthSelect.innerHTML = '';
+
+    const gridSizes = new Set();
+    const timerLengths = new Set();
+
+    Object.keys(highScores).forEach(key => {
+      const [grid, timer] = key.split('_');
+      gridSizes.add(grid);
+      timerLengths.add(timer);
+    });
+
+    gridSizes.forEach(size => {
+      const option = document.createElement('option');
+      option.value = size;
+      option.textContent = size;
+      gridSizeSelect.appendChild(option);
+    });
+
+    timerLengths.forEach(length => {
+      const option = document.createElement('option');
+      option.value = length;
+      option.textContent = length;
+      timerLengthSelect.appendChild(option);
+    });
+
+    gridSizeSelect.value = `${gridSize}x${gridSize}`;
+    timerLengthSelect.value = timerDuration || '∞';
+
+    gridSizeSelect.addEventListener('change', updateHighScoresTable);
+    timerLengthSelect.addEventListener('change', updateHighScoresTable);
+
+    updateHighScoresTable();
+    modal.style.display = 'block';
+  }
+
+  function updateHighScoresTable() {
+    const gridSizeSelect = document.getElementById('gridSizeSelect').value;
+    const timerLengthSelect = document.getElementById('timerLengthSelect').value;
+    const table = document.getElementById('highScoresTable');
+    const mode = `${gridSizeSelect}_${timerLengthSelect}`;
+
+    table.innerHTML = `
+      <tr>
+        <th>Initials</th>
+        <th>Grid Size</th>
+        <th>Hits</th>
+        <th>Misses</th>
+      </tr>
+    `;
+
+    if (highScores[mode]) {
+      highScores[mode].forEach(score => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${score.initials}</td>
+          <td>${score.gridSize}x${score.gridSize}</td>
+          <td>${score.hits}</td>
+          <td>${score.misses}</td>
+        `;
+        if (score === justCompletedScore) {
+          row.classList.add('new-high-score');
+        } else {
+          row.classList.add('high-score');
+        }
+        table.appendChild(row);
+      });
+    }
+  }
+</script>
+
+</body>
+</html>
