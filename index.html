@@ -7,14 +7,24 @@
 <style>
   body, html {
     height: 100%;
+    width: 100%;
     margin: 0;
+    padding: 0;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     font-family: Arial, sans-serif;
     background-color: #f0f0f0;
   }
+
+  #wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 90vmin;
+    width: 90vmin; /* Adjust this width to control the max width of the content */
+  }
+
   #scoreboard {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -23,18 +33,23 @@
     color: white;
     gap: 10px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin: 20px;
+    width: 100%;
+    box-sizing: border-box;
   }
+
   #scoreboard div {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
   }
+
   .label {
     font-size: 1.2em;
     font-family: 'Consolas', monospace;
   }
+
   .metric {
     font-size: 1.5em;
     color: yellow;
@@ -45,39 +60,45 @@
     width: 8ch;
     text-align: right;
   }
+
   .header-label {
     font-size: 1.2em;
     font-family: 'Consolas', monospace;
     font-weight: bold;
     color: yellow;
   }
+
   #game-container {
-    width: 90vmin;
-    height: 90vmin;
     display: grid;
+    aspect-ratio: 1 / 1; /* Ensures the container stays square */
+    width: 100%;
     gap: 1px;
-    margin: 20px;
-    grid-auto-rows: 1fr;
   }
+
   .cell {
     background-color: #ccc;
     aspect-ratio: 1 / 1;
   }
+
   .purple-cell {
     background-color: purple;
   }
+
   #controls {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
+
   label {
     margin-right: 10px;
   }
+
   #gridSize, #timerInput {
     margin-right: 10px;
     padding: 5px;
   }
+
   #highScoresButton {
     margin-top: 10px;
     padding: 10px;
@@ -86,27 +107,32 @@
     border: none;
     cursor: pointer;
   }
+
   #stopButton {
+    font-size: 1.5em;
+    font-weight: bold;
     background-color: red;
+    color: white;
     margin-top: 10px;
     padding: 10px;
   }
+
   #startButton {
     font-size: 1.5em;
-  }
-  #startButton:disabled {
-    background-color: gray;
-    margin-top: 10px;
-    padding: 10px;
-  }
-  #startButton:enabled {
-    color: white;
-    background-color: green;
     font-weight: bold;
     margin-top: 10px;
     padding: 10px;
   }
-    
+
+  #startButton:disabled {
+    background-color: gray;
+  }
+
+  #startButton:enabled {
+    color: white;
+    background-color: green;
+  }
+
   #highScoresModal, #initialsModal {
     display: none;
     position: fixed;
@@ -119,6 +145,7 @@
     background-color: rgb(0, 0, 0);
     background-color: rgba(0, 0, 0, 0.4);
   }
+
   #highScoresContent, #initialsContent {
     background-color: #333;
     margin: 15% auto;
@@ -128,12 +155,14 @@
     color: white;
     font-family: 'Consolas', monospace;
   }
+
   #closeModal, #closeInitialsModal {
     color: #aaa;
     float: right;
     font-size: 28px;
     font-weight: bold;
   }
+
   #closeModal:hover,
   #closeModal:focus,
   #closeInitialsModal:hover,
@@ -142,74 +171,80 @@
     text-decoration: none;
     cursor: pointer;
   }
+
   #highScoresTable, #initialsTable {
     width: 100%;
     margin-top: 10px;
   }
+
   .high-score {
     color: yellow;
   }
+
   .new-high-score {
     background-color: black;
     color: yellow;
     font-weight: bold;
   }
+
   @keyframes highlightGreen {
     from { background-color: green; }
     to { background-color: transparent; }
   }
+
   @keyframes highlightRed {
     from { background-color: red; }
     to { background-color: transparent; }
   }
 
   .control-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
   }
 
 </style>
 </head>
 <body>
 
-<div id="scoreboard">
-  <div>
-    <span class="header-label">Grid Size: <span id="currentSize"></span></span>
+<div id="wrapper">
+  <div id="scoreboard">
+    <div>
+      <span class="header-label">Grid Size: <span id="currentSize"></span></span>
+    </div>
+    <div>
+      <button id="highScoresButton" class="header-label" style="background-color: yellow; color: #000; border: none; cursor: pointer;">Hi-Scores</button>
+    </div>
+    <div>
+      <span class="header-label">Game Timer: <span id="currentTimeSetting"></span></span>
+    </div>
+    <div>
+      <span class="label">Hits</span>
+      <span id="hits" class="metric">0</span>
+    </div>
+    <div>
+      <span class="label">Misses</span>
+      <span id="misses" class="metric">0</span>
+    </div>
+    <div>
+      <span class="label">Accuracy</span>
+      <span id="accuracy" class="metric">0%</span>
+    </div>
+    <div>
+      <span class="label">Hits per minute</span>
+      <span id="hitsPerMinute" class="metric">0</span>
+    </div>
+    <div>
+      <span class="label">Time Elapsed</span>
+      <span id="time" class="metric">0.00</span>
+    </div>
+    <div>
+      <span class="label">Time Remaining</span>
+      <span id="timeLeft" class="metric">0.00</span>
+    </div>
   </div>
-  <div>
-    <button id="highScoresButton" class="header-label" style="background-color: yellow; color: #000; border: none; cursor: pointer;">Hi-Scores</button>
-  </div>
-  <div>
-    <span class="header-label">Game Timer: <span id="currentTimeSetting"></span></span>
-  </div>
-  <div>
-    <span class="label">Hits</span>
-    <span id="hits" class="metric">0</span>
-  </div>
-  <div>
-    <span class="label">Misses</span>
-    <span id="misses" class="metric">0</span>
-  </div>
-  <div>
-    <span class="label">Accuracy</span>
-    <span id="accuracy" class="metric">0%</span>
-  </div>
-  <div>
-    <span class="label">Hits per minute</span>
-    <span id="hitsPerMinute" class="metric">0</span>
-  </div>
-  <div>
-    <span class="label">Time Elapsed</span>
-    <span id="time" class="metric">0.00</span>
-  </div>
-  <div>
-    <span class="label">Time Remaining</span>
-    <span id="timeLeft" class="metric">0.00</span>
-  </div>
-</div>
 
-<div id="controls">
+  <div id="controls">
     <div class="control-group">
       <label for="gridSize">Grid Size:</label>
       <input type="number" id="gridSize" placeholder="Size" min="2">
@@ -221,9 +256,9 @@
     <button id="startButton" disabled>Start</button>
     <button id="stopButton" style="display: none;">Stop</button>
   </div>
-  
 
-<div id="game-container"></div>
+  <div id="game-container"></div>
+</div>
 
 <audio id="buzz" src="buzz.mp3" preload="auto"></audio>
 <audio id="ding" src="ding.mp3" preload="auto"></audio>
